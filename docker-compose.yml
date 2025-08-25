@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - output_data:/app/output
+      - ./shared/uploads:/app/../shared/uploads
     environment:
       - PYTHONUNBUFFERED=1
 
@@ -21,12 +21,9 @@ services:
     ports:
       - "5050:5050"
     volumes:
-      - output_data:/app/output
+      - ./shared/uploads:/app/../shared/uploads
     depends_on:
       - ai_service
     environment:
       - PYTHONUNBUFFERED=1
       - AI_SERVICE_URL=http://ai_service:8000/detect
-
-volumes:
-  output_data:
