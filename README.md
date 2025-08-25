@@ -69,12 +69,6 @@ This starts the YOLOv8 API on **http://127.0.0.1:8000**.
 ```bash
 cd ui_service
 pip install -r requirements.txt
-# Optional: override if your AI URL differs; otherwise defaults to http://127.0.0.1:8000/detect
-# Linux/macOS:
-export AI_SERVICE_URL=http://127.0.0.1:8000/detect
-# Windows PowerShell:
-# $env:AI_SERVICE_URL = "http://127.0.0.1:8000/detect"
-
 python3 app.py
 ```
 Now open **http://127.0.0.1:5050** in your browser.
