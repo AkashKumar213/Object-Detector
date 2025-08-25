@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Object Detection - Upload Image</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 40px 20px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #222;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: white;
+      padding: 30px 40px;
+      border-radius: 8px;
+      box-shadow: 0 6px 15px rgb(0 0 0 / 0.1);
+      margin-bottom: 40px;
+    }
+    input[type="file"] {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+    button {
+      background-color: #007bff;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 200px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #loading {
+      margin-left: 15px;
+      font-size: 16px;
+      color: #666;
+      display: none;
+    }
+    #error {
+      margin-top: 10px;
+      color: #e74c3c;
+      text-align: center;
+      font-weight: 600;
+    }
+    #result {
+      display: none;
+      background: white;
+      padding: 30px 40px;
+      border-radius: 8px;
+      box-shadow: 0 6px 15px rgb(0 0 0 / 0.1);
+    }
+    #result h2 {
+      margin-top: 0;
+      margin-bottom: 25px;
+      text-align: center;
+      color: #444;
+    }
+    #images {
+      display: flex;
+      justify-content: space-around;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+    #images div {
+      flex: 1 1 300px;
+      text-align: center;
+    }
+    #images h3 {
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: #222;
+    }
+    #images img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+    }
+    pre {
+      max-height: 300px;
+      overflow-y: auto;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 15px 20px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #222;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Object Detection Web UI</h1>
+
+  <form id="uploadForm" enctype="multipart/form-data" autocomplete="off">
+    <input type="file" name="image" id="imageInput" accept="image/*" required />
+    <div style="display:flex; align-items:center; justify-content:center; margin-top: -10px;">
+      <button type="submit">Upload &amp; Detect</button>
+      <span id="loading">⏳ Processing...</span>
+    </div>
+  </form>
+
+  <div id="error"></div>
+
+  <div id="result">
+    <h2>Detection Results</h2>
+    <div id="images">
+      <div>
+        <h3>Original Image</h3>
+        <img id="originalImage" alt="Original upload" />
+      </div>
+      <div>
+        <h3>Processed Image</h3>
+        <img id="processedImage" alt="Processed with bounding boxes" />
+      </div>
+    </div>
+    <h3>Detections</h3>
+    <pre id="detectionsJson"></pre>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    const resultDiv = document.getElementById('result');
+    const originalImage = document.getElementById('originalImage');
+    const processedImage = document.getElementById('processedImage');
+    const detectionsJson = document.getElementById('detectionsJson');
+    const imageInput = document.getElementById('imageInput');
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      errorDiv.textContent = '';
+      detectionsJson.textContent = '';
+      resultDiv.style.display = 'none';
+
+      if (!imageInput.files[0]) {
+        errorDiv.textContent = "Please select an image to upload.";
+        return;
+      }
+
+      loading.style.display = 'inline';
+
+      try {
+        const formData = new FormData();
+        formData.append('image', imageInput.files[0]);
+
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(errText || 'Upload failed');
+        }
+
+        const result = await response.json();
+
+        originalImage.src = '/uploads/' + result.input_image;
+        processedImage.src = result.output_img_url;
+
+        if (result.detections && result.detections.length > 0) {
+          detectionsJson.textContent = JSON.stringify(result.detections, null, 2);
+        } else {
+          detectionsJson.textContent = "No match found.";
+        }
+
+        resultDiv.style.display = 'block';
+      } catch (err) {
+        errorDiv.textContent = 'Error: ' + err.message;
+      } finally {
+        loading.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
